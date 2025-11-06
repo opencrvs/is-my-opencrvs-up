@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OpenCRVS Healthcheck</title>
+  </head>
+  <body>
+    <h1>Is my OpenCRVS stack fully up?</h1>
+    <ul id="services"></ul>
+    <div>
+      <h4>OpenHIM configured</h4>
+      <div className="success">OpenHIM has channels</div>
+      <div className="failed">OpenHIM channels do not exist</div>
+    </div>
+    <script>
+      const $services = document.getElementById("services");
+      const services = [
+        { name: "auth", url: "http://localhost:4040/ping" },
+        { name: "user", url: "http://localhost:3030/ping" },
+        { name: "webhooks", url: "http://localhost:2525/ping" },
+        { name: "notification", url: "http://localhost:2020/ping" },
+        { name: "gateway", url: "http://localhost:7070/ping?service=gateway" },
+        { name: "workflow", url: "http://localhost:5050/ping" },
+        { name: "search", url: "http://localhost:9090/ping" },
+        { name: "countryconfig", url: "http://localhost:3040/ping" },
+        { name: "metrics", url: "http://localhost:1050/ping" },
+        { name: "client", url: "http://localhost:3000/ping" },
+        { name: "login", url: "http://localhost:3020/ping" },
+        { name: "config", url: "http://localhost:2021/ping" },
+        { name: "openhim", url: "https://localhost:8080/channels" },
+      ];
+
+      function setHealthy(service) {
+        const $li = document.createElement("li");
+        $li.innerText = `✅ ${service.name} ok`;
+        $services.appendChild($li);
+      }
+      function setFailing(service) {
+        const $li = document.createElement("li");
+        $li.innerText = `🚨 ${service.name} not responding`;
+        $services.appendChild($li);
+      }
+
+      services.forEach((service) => {
+        fetch(service.url, { cors: true })
+          .then((res) => {
+            if (
+              (service.acceptedStatusCodes &&
+                service.acceptedStatusCodes.includes(res.status)) ||
+              res.status === 200
+            ) {
+              return setHealthy(service);
+            }
+
+            setFailing(service);
+          })
+          .catch((err) => {
+            console.dir(err);
+            setFailing(service);
+          });
+      });
+    </script>
+  </body>
+</html>
